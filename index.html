@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>视频播放器</title>
+
+<!-- DPlayer -->
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/dplayer/1.23.0/DPlayer.min.css">
+
+<style>
+/* ---------- 美化 DPlayer 进度条 ---------- */
+.dplayer .dplayer-progress {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.dplayer .dplayer-progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: #5d99f6;
+}
+
+.dplayer .dplayer-progress-dot {
+    background: #5d99f6;
+}
+/* ---------- 自定义字体 ---------- */
+@font-face {
+    font-family: "CustomTitle";
+    src: url("https://mpimg.cn/down.php/2238494a42aed0b312418ec3fd552279.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    unicode-range: U+0000-FFFF;
+}
+@font-face {
+    font-family: "CustomText";
+    src: url("https://mpimg.cn/down.php/0fb8e1d1c0b574be14a308a54c6851f8.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    unicode-range: U+0000-FFFF;
+}
+@font-face {
+    font-family: "RareChar";
+    src: url("https://mpimg.cn/down.php/050c3105d9f1dc9fec91b6ec8fc153b1.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    unicode-range: U+0000-FFFF;
+}
+
+/* ---------- 背景渐变 + 液态玻璃 ---------- */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background: linear-gradient(135deg, #e0e4e8 0%, #cfd6dd 50%, #e8ecf1 100%);
+}
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-color: rgba(255,255,255,0.25);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "CustomText", "RareChar", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC";
+    overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* ---------- 容器 ---------- */
+.container {
+    position: relative;
+    z-index: 0;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 18px 40px 18px;
+}
+
+/* ---------- 标题 & 信息 ---------- */
+#title {
+    font-family: "CustomTitle", "RareChar", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC";
+    font-size: 28px;
+    font-weight: 900;
+    color: #111;
+    margin-bottom: 6px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.info-line {
+    opacity: 0.65;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+/* ---------- 作者 ---------- */
+.author-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 26px;
+}
+.author-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* ---------- 播放器 ---------- */
+#dplayer {
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+}
+.dplayer *:focus { outline: none !important; }
+.dplayer-controller {
+    border-radius: 0 0 20px 20px;
+    background: rgba(0,0,0,0.25) !important;
+    backdrop-filter: blur(12px);
+    bottom: -10px;
+    transition: bottom 0.25s;
+}
+.dplayer:hover .dplayer-controller { bottom: 0; }
+.dplayer-controller .dplayer-play-btn {
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.dplayer-controller .dplayer-play-btn:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+/* ---------- 简介标题 & 内容 ---------- */
+#textTitle {
+    margin-top: 30px;
+    margin-bottom: 12px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    font-family: "CustomTitle", "RareChar", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC";
+}
+
+#text {
+    line-height: 1.78;
+    color: #444;
+    font-size: 17px;
+    white-space: pre-line;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    font-family: "CustomText", "RareChar", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC";
+}
+
+/* ---------- 图集 ---------- */
+#galleryTitle {
+    margin-top: 30px;
+    margin-bottom: 12px;
+    font-size: 20px;
+    font-weight: 700;
+}
+.gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.gallery img {
+    width: 72px;
+    height: 72px;
+    border-radius: 14px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.gallery img:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+/* ---------- 大图浏览全屏淡入淡出 ---------- */
+#viewerMask {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    overflow: hidden;
+    touch-action: none;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(42px) saturate(220%);
+    -webkit-backdrop-filter: blur(42px) saturate(220%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s linear;
+}
+#viewerMask.show {
+    opacity: 1;
+    pointer-events: all;
+}
+#viewerImg {
+    max-width: calc(100% - 60px);
+    max-height: calc(100% - 140px);
+    object-fit: contain;
+    border-radius: 20px;
+    margin: 30px auto 90px auto;
+    display: block;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.15);
+    transform: scale(0.95);
+    transition: transform 0.35s linear;
+}
+#viewerMask.show #viewerImg { transform: scale(1); }
+
+/* ---------- 按钮区 ---------- */
+.viewer-btn-area {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+}
+.btn-round {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.22);
+    backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.35);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    transition: transform .15s, background .15s;
+    outline: none;
+}
+.btn-round:hover {
+    transform: scale(1.12);
+    background: rgba(255,255,255,0.32);
+}
+
+/* ---------- 去除点击高亮 ---------- */
+img, .btn-round {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+}
+button, input, a, div[role="button"] {
+    outline: none;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div id="title">示例标题</div>
+    <div class="info-line" id="time">2023-12-31 20:00</div>
+
+    <div class="author-box">
+        <div id="authorAvatar" class="author-avatar"></div>
+        <div id="worker">示例作者</div>
+    </div>
+
+    <div id="dplayer"></div>
+
+    <!-- 简介 -->
+    <div id="textTitle">简介</div>
+    <div id="text">示例简介内容</div>
+
+    <div id="galleryTitle" style="display:none;">图片集</div>
+    <div id="gallery" class="gallery"></div>
+</div>
+
+<!-- 大图浏览 -->
+<div id="viewerMask">
+    <img id="viewerImg">
+    <div class="viewer-btn-area">
+        <div id="arrowLeft"  class="btn-round">&lt;</div>
+        <div id="arrowRight" class="btn-round">&gt;</div>
+        <div id="downloadBtn" class="btn-round">↓</div>
+        <div id="closeBtn"    class="btn-round">×</div>
+    </div>
+</div>
+
+<!-- JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/0.5.14/hls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dplayer/1.27.1/DPlayer.min.js"></script>
+
+<script>
+function G(n){ return new URL(location.href).searchParams.get(n); }
+const pics = (G("pic") || 
+"https://d.abvod.cn/t/65496936848822272/Videos/HTML/IMG_20251108_143527.png," +
+"https://d.abvod.cn/t/65496936848822272/Videos/HTML/IMG_20251108_143703.png," +
+"https://d.abvod.cn/t/65496936848822272/Videos/HTML/IMG_20251108_143608.png"
+).split(",").filter(x=>x);
+
+title.textContent  = G("title")  || "示例标题";
+worker.textContent = G("worker") || "示例作者";
+time.textContent   = G("time")   || "2023-12-31 20:00";
+text.textContent   = G("text")   || "示例简介内容";
+
+const videoURL = G("url") || "https://www.langpan.cn/view.php/bba507d82e74bc43d5f7b8844d88fac1.mp4";
+
+/* 作者头像颜色 */
+function strHash(s){ let h=0; for(let c of s) h=c.charCodeAt(0)+((h<<5)-h); return Math.abs(h); }
+function hashColor(h){ return `rgb(${h%200+30},${Math.floor(h/100)%200+30},${Math.floor(h/10000)%200+30})`; }
+function txtColor(r,g,b){ return (0.299*r+0.587*g+0.114*b)>150?"#000":"#fff"; }
+const c = (worker.textContent||"示")[0];
+const h = strHash(c);
+const col = hashColor(h);
+const rgb = col.match(/\d+/g);
+authorAvatar.style.background = col;
+authorAvatar.style.color      = txtColor(+rgb[0],+rgb[1],+rgb[2]);
+authorAvatar.textContent      = c;
+
+/* DPlayer */
+const dp = new DPlayer({
+    container: document.getElementById("dplayer"),
+    video: { url: videoURL, pic: pics[0] || "" },
+    autoplay: false
+});
+
+/* 图集 */
+if (pics.length>0) galleryTitle.style.display="block";
+let currentIndex=0;
+pics.forEach((src,i)=>{
+    const im=document.createElement("img");
+    im.src=src;
+    im.onclick=()=>openViewer(i);
+    gallery.appendChild(im);
+});
+
+/* 大图浏览 */
+const mask=document.getElementById("viewerMask");
+const vimg=document.getElementById("viewerImg");
+function openViewer(i){
+    currentIndex=i;
+    vimg.src=pics[i];
+    mask.classList.add("show");
+    document.body.style.overflow="hidden";
+}
+function closeViewer(){
+    mask.classList.remove("show");
+    document.body.style.overflow="";
+}
+document.getElementById("closeBtn").onclick=closeViewer;
+function show(i){
+    if(i<0) i=pics.length-1;
+    if(i>=pics.length) i=0;
+    currentIndex=i;
+    vimg.src=pics[i];
+}
+document.getElementById("arrowLeft").onclick = ()=>show(currentIndex-1);
+document.getElementById("arrowRight").onclick= ()=>show(currentIndex+1);
+
+document.addEventListener("keydown",e=>{
+    if(!mask.classList.contains("show")) return;
+    if(e.key==="ArrowLeft") show(currentIndex-1);
+    if(e.key==="ArrowRight") show(currentIndex+1);
+    if(e.key==="Escape") closeViewer();
+});
+
+/* 下载 Blob */
+document.getElementById("downloadBtn").onclick = async ()=>{
+    try{
+        const res=await fetch(pics[currentIndex],{mode:"cors"});
+        const blob=await res.blob();
+        const a=document.createElement("a");
+        const url=URL.createObjectURL(blob);
+        a.href=url;
+        a.download="image_"+(currentIndex+1)+".png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    }catch(e){
+        alert("无法下载：跨域限制");
+    }
+};
+
+/* 禁止 viewer 滚动 */
+mask.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
+mask.addEventListener("wheel",e=>e.preventDefault(),{passive:false});
+</script>
+
+</body>
+</html>
